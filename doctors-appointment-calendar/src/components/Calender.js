@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import Modal from 'react-modal';
 import { useForm } from 'react-hook-form';
+import Modal from 'react-modal';
+import styled from 'styled-components';
+import { addAppointment } from '../features/appointmentsSlice';
 
 const CalendarContainer = styled.div`
     display: grid;
@@ -57,15 +59,6 @@ const customStyles = {
     },
 };
 
-// Dummy data for appointments
-const initialAppointments = [
-    { id: 1, day: 1, time: '09:00 AM', title: 'Dental Checkup', description: 'Routine dental check at Green Dental Clinic.' },
-    { id: 2, day: 1, time: '12:00 PM', title: 'Meeting with Mr. Smith Jackson', description: 'Discuss quarterly business results and projections.' },
-    { id: 3, day: 1, time: '01:00 PM', title: 'Dental Checkup', description: 'Follow-up dental treatment for cavity filling.' },
-    { id: 4, day: 1, time: '02:00 PM', title: 'Meeting with Jake', description: 'Plan upcoming marketing campaign strategies.' },
-    { id: 5, day: 2, time: '02:00 PM', title: 'Lunch with Surgeon', description: 'Casual lunch to discuss collaborative opportunities.' },
-];
-
 function Calendar() {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -73,15 +66,18 @@ function Calendar() {
     const { register, handleSubmit, reset } = useForm();
     const { year, month } = useParams();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const appointments = useSelector(state => state.appointments);
+
+    // Define months and years arrays here
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const years = [2019, 2020, 2021];
 
     useEffect(() => {
         if (!year || !month) {
             navigate(`/year/${new Date().getFullYear()}/month/${new Date().getMonth() + 1}`);
         }
     }, [month, year, navigate]);
-
-    const months = Array.from({ length: 12 }, (_, i) => i + 1);
-    const years = [2019, 2020, 2021];
 
     const openModal = (appointment) => {
         setSelectedAppointment(appointment);
@@ -94,7 +90,7 @@ function Calendar() {
     };
 
     const onSubmit = data => {
-        console.log(data); // Log the data or handle it as needed
+        dispatch(addAppointment({...data, id: appointments.length + 1, day: new Date(data.date).getDate()}));
         closeModal();
         reset();
     };
@@ -115,7 +111,7 @@ function Calendar() {
     const renderDays = () => {
         let days = [];
         for (let day = 1; day <= totalDays; day++) {
-            const dailyAppointments = initialAppointments.filter(app => app.day === day);
+            const dailyAppointments = appointments.filter(app => app.day === day);
             days.push(
                 <DayCell key={day}>
                     <strong>Day {day}</strong>
@@ -147,9 +143,9 @@ function Calendar() {
                         <option key={y} value={y}>
                             {y}
                         </option>
-                    ))}
-                </select>
-                <button onClick={() => setCreateModalOpen(true)}>Create Appointment</button>
+                        ))}
+                        </select>
+                        <button onClick={() => setCreateModalOpen(true)}>Create Appointment</button>
             </CalendarHeader>
             <CalendarContainer>
                 {renderDays()}
@@ -182,7 +178,7 @@ function Calendar() {
                 </form>
             </Modal>
         </div>
-    );
+);
 }
 
 export default Calendar;
