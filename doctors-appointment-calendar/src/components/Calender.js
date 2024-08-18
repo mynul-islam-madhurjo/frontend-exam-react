@@ -69,13 +69,13 @@ function Calendar() {
     const dispatch = useDispatch();
     const appointments = useSelector(state => state.appointments);
 
-    // Define months and years arrays here
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
     const years = [2019, 2020, 2021];
 
     useEffect(() => {
         if (!year || !month) {
-            navigate(`/year/${new Date().getFullYear()}/month/${new Date().getMonth() + 1}`);
+            const currentDate = new Date();
+            navigate(`/year/${currentDate.getFullYear()}/month/${currentDate.getMonth() + 1}`);
         }
     }, [month, year, navigate]);
 
@@ -90,7 +90,15 @@ function Calendar() {
     };
 
     const onSubmit = data => {
-        dispatch(addAppointment({...data, id: appointments.length + 1, day: new Date(data.date).getDate()}));
+        const appointmentDate = new Date(data.date);
+        dispatch(addAppointment({
+            ...data,
+            id: Date.now(),
+            date: appointmentDate.toISOString(),
+            day: appointmentDate.getDate(),
+            month: appointmentDate.getMonth() + 1,
+            year: appointmentDate.getFullYear()
+        }));
         closeModal();
         reset();
     };
@@ -111,16 +119,26 @@ function Calendar() {
     const renderDays = () => {
         let days = [];
         for (let day = 1; day <= totalDays; day++) {
-            const dailyAppointments = appointments.filter(app => app.day === day);
+            const dailyAppointments = appointments.filter(app =>
+                app.year === parseInt(year) &&
+                app.month === parseInt(month) &&
+                app.day === day
+            ).sort((a, b) => new Date(a.date) - new Date(b.date));
+
             days.push(
                 <DayCell key={day}>
                     <strong>Day {day}</strong>
                     <AppointmentsContainer>
-                        {dailyAppointments.map(app => (
-                            <Appointment key={app.id} onClick={() => openModal(app)}>
-                                {app.time} - {app.title}
+                        {dailyAppointments.slice(0, 3).map((app, index) => (
+                            <Appointment key={index} onClick={() => openModal(app)}>
+                                {`${new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${app.name}`}
                             </Appointment>
                         ))}
+                        {dailyAppointments.length > 3 && (
+                            <Appointment onClick={() => openModal({ ...dailyAppointments[3], isMore: true })}>
+                                {`+ ${dailyAppointments.length - 3} more`}
+                            </Appointment>
+                        )}
                     </AppointmentsContainer>
                 </DayCell>
             );
@@ -140,12 +158,10 @@ function Calendar() {
                 </select>
                 <select value={year} onChange={handleYearChange}>
                     {years.map(y => (
-                        <option key={y} value={y}>
-                            {y}
-                        </option>
-                        ))}
-                        </select>
-                        <button onClick={() => setCreateModalOpen(true)}>Create Appointment</button>
+                        <option key={y} value={y}>{y}</option>
+                    ))}
+                </select>
+                <button onClick={() => setCreateModalOpen(true)}>Create Appointment</button>
             </CalendarHeader>
             <CalendarContainer>
                 {renderDays()}
@@ -153,11 +169,31 @@ function Calendar() {
             <Modal isOpen={modalIsOpen} onRequestClose={closeModal} style={customStyles} contentLabel="Appointment Details">
                 <h2>Appointment Details</h2>
                 {selectedAppointment ? (
-                    <div>
-                        <p><strong>Time:</strong> {selectedAppointment.time}</p>
-                        <p><strong>Title:</strong> {selectedAppointment.title}</p>
-                        <p><strong>Description:</strong> {selectedAppointment.description}</p>
-                    </div>
+                    selectedAppointment.isMore ? (
+                        <div>
+                            <h3>All Appointments for {new Date(selectedAppointment.date).toLocaleDateString()}</h3>
+                            {appointments.filter(app =>
+                                app.year === parseInt(year) &&
+                                app.month === parseInt(month) &&
+                                app.day === selectedAppointment.day
+                            ).map((app, index) => (
+                                <div key={index}>
+                                    <p><strong>Name:</strong> {app.name}</p>
+                                    <p><strong>Time:</strong> {new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <p><strong>Gender:</strong> {app.gender}</p>
+                                    <p><strong>Age:</strong> {app.age}</p>
+                                    <hr />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div>
+                            <p><strong>Name:</strong> {selectedAppointment.name}</p>
+                            <p><strong>Time:</strong> {new Date(selectedAppointment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p><strong>Gender:</strong> {selectedAppointment.gender}</p>
+                            <p><strong>Age:</strong> {selectedAppointment.age}</p>
+                        </div>
+                    )
                 ) : <p>No details available.</p>}
                 <button onClick={closeModal}>Close</button>
             </Modal>
@@ -178,7 +214,7 @@ function Calendar() {
                 </form>
             </Modal>
         </div>
-);
+    );
 }
 
 export default Calendar;
