@@ -6,6 +6,19 @@ import Modal from 'react-modal';
 import styled from 'styled-components';
 import { addAppointment } from '../features/appointmentsSlice';
 
+const ScrollableAppointmentList = styled.div`
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+`;
+
+const AppointmentItem = styled.div`
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+`;
+
 const CalendarContainer = styled.div`
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -135,7 +148,7 @@ function Calendar() {
                             </Appointment>
                         ))}
                         {dailyAppointments.length > 3 && (
-                            <Appointment onClick={() => openModal({ ...dailyAppointments[3], isMore: true })}>
+                            <Appointment onClick={() => openModal({ day, appointments: dailyAppointments, isMore: true })}>
                                 {`+ ${dailyAppointments.length - 3} more`}
                             </Appointment>
                         )}
@@ -171,20 +184,17 @@ function Calendar() {
                 {selectedAppointment ? (
                     selectedAppointment.isMore ? (
                         <div>
-                            <h3>All Appointments for {new Date(selectedAppointment.date).toLocaleDateString()}</h3>
-                            {appointments.filter(app =>
-                                app.year === parseInt(year) &&
-                                app.month === parseInt(month) &&
-                                app.day === selectedAppointment.day
-                            ).map((app, index) => (
-                                <div key={index}>
-                                    <p><strong>Name:</strong> {app.name}</p>
-                                    <p><strong>Time:</strong> {new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                                    <p><strong>Gender:</strong> {app.gender}</p>
-                                    <p><strong>Age:</strong> {app.age}</p>
-                                    <hr />
-                                </div>
-                            ))}
+                            <h5>All Appointments for Day {selectedAppointment.day}</h5>
+                            <ScrollableAppointmentList>
+                                {selectedAppointment.appointments.map((app, index) => (
+                                    <AppointmentItem key={index}>
+                                        <p><strong>Name:</strong> {app.name}</p>
+                                        <p><strong>Time:</strong> {new Date(app.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                        <p><strong>Gender:</strong> {app.gender}</p>
+                                        <p><strong>Age:</strong> {app.age}</p>
+                                    </AppointmentItem>
+                                ))}
+                            </ScrollableAppointmentList>
                         </div>
                     ) : (
                         <div>
