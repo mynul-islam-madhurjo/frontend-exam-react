@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Modal from 'react-modal';
 
@@ -62,14 +63,20 @@ const initialAppointments = [
     { id: 3, day: 1, time: '01:00 PM', title: 'Dental Checkup', description: 'Follow-up dental treatment for cavity filling.' },
     { id: 4, day: 1, time: '02:00 PM', title: 'Meeting with Jake', description: 'Plan upcoming marketing campaign strategies.' },
     { id: 5, day: 2, time: '02:00 PM', title: 'Lunch with Surgeon', description: 'Casual lunch to discuss collaborative opportunities.' },
-    // Add more appointments as needed
 ];
 
 function Calendar() {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState(null);
-    const [month, setMonth] = useState(new Date().getMonth() + 1);
-    const [year, setYear] = useState(new Date().getFullYear());
+    const { year, month } = useParams();
+    const navigate = useNavigate();
+
+    // Redirect to current month/year if not specified
+    useEffect(() => {
+        if (!year || !month) {
+            navigate(`/year/${new Date().getFullYear()}/month/${new Date().getMonth() + 1}`);
+        }
+    }, [month, year, navigate]);
 
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
     const years = [2019, 2020, 2021];
@@ -84,14 +91,16 @@ function Calendar() {
     };
 
     const handleMonthChange = (e) => {
-        setMonth(parseInt(e.target.value));
+        const newMonth = parseInt(e.target.value);
+        navigate(`/year/${year}/month/${newMonth}`);
     };
 
     const handleYearChange = (e) => {
-        setYear(parseInt(e.target.value));
+        const newYear = parseInt(e.target.value);
+        navigate(`/year/${newYear}/month/${month}`);
     };
 
-    const daysInMonth = (month, year) => new Date(year, month, 0).getDate();
+    const daysInMonth = (month, year) => new Date(year, parseInt(month), 0).getDate();
     const totalDays = daysInMonth(month, year);
 
     const renderDays = () => {
