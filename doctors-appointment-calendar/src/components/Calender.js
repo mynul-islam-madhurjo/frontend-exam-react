@@ -83,7 +83,7 @@ function Calendar() {
     const appointments = useSelector(state => state.appointments);
 
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
-    const years = [2019, 2020, 2021];
+    const years = [2019, 2020, 2021, 2022, 2023, 2024];
 
     useEffect(() => {
         if (!year || !month) {
@@ -103,7 +103,7 @@ function Calendar() {
     };
 
     const onSubmit = data => {
-        const appointmentDate = new Date(data.date);
+        const appointmentDate = new Date(`${data.date}T${data.time}`);
         dispatch(addAppointment({
             ...data,
             id: Date.now(),
