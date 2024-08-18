@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Modal from 'react-modal';
+import { useForm } from 'react-hook-form';
 
 const CalendarContainer = styled.div`
     display: grid;
@@ -14,7 +15,7 @@ const CalendarHeader = styled.div`
     display: flex;
     justify-content: space-between;
     padding: 10px;
-    margin-bottom: 20px;  // Adds some space between the header and the calendar grid
+    margin-bottom: 20px;
 `;
 
 const DayCell = styled.div`
@@ -67,11 +68,12 @@ const initialAppointments = [
 
 function Calendar() {
     const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [createModalOpen, setCreateModalOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState(null);
+    const { register, handleSubmit, reset } = useForm();
     const { year, month } = useParams();
     const navigate = useNavigate();
 
-    // Redirect to current month/year if not specified
     useEffect(() => {
         if (!year || !month) {
             navigate(`/year/${new Date().getFullYear()}/month/${new Date().getMonth() + 1}`);
@@ -88,6 +90,13 @@ function Calendar() {
 
     const closeModal = () => {
         setModalIsOpen(false);
+        setCreateModalOpen(false);
+    };
+
+    const onSubmit = data => {
+        console.log(data); // Log the data or handle it as needed
+        closeModal();
+        reset();
     };
 
     const handleMonthChange = (e) => {
@@ -140,6 +149,7 @@ function Calendar() {
                         </option>
                     ))}
                 </select>
+                <button onClick={() => setCreateModalOpen(true)}>Create Appointment</button>
             </CalendarHeader>
             <CalendarContainer>
                 {renderDays()}
@@ -154,6 +164,22 @@ function Calendar() {
                     </div>
                 ) : <p>No details available.</p>}
                 <button onClick={closeModal}>Close</button>
+            </Modal>
+            <Modal isOpen={createModalOpen} onRequestClose={closeModal} style={customStyles}>
+                <h2>Create New Appointment</h2>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <input {...register("name")} placeholder="Name" required />
+                    <select {...register("gender")} required>
+                        <option value="">Select Gender...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <input type="number" {...register("age")} placeholder="Age" required />
+                    <input type="date" {...register("date")} required />
+                    <input type="time" {...register("time")} required />
+                    <button type="submit">Submit</button>
+                </form>
             </Modal>
         </div>
     );
